@@ -40,7 +40,7 @@ export const DIFFICULTY_INFO: Record<Difficulty, DifficultyInfo> = {
   easy: { label: "かんたん", description: "1もじの ローマ字にゅうりょく", attackPower: 15, intervalScale: 1.4 },
   normal: { label: "ふつう", description: "5もじいないの ことば", attackPower: 8, intervalScale: 1.15 },
   hard: { label: "むずかしい", description: "だくおん・ようおんの ことば", attackPower: 6, intervalScale: 1.0 },
-  infinity: { label: "インフィニティ", description: "たおしても つづく むずかしい", attackPower: 6, intervalScale: 1.0 },
+  infinity: { label: "インフィニティ", description: "げんかいに いどめ！", attackPower: 6, intervalScale: 1.0 },
 };
 
 /** インフィニティでループするごとの攻撃の成長倍率 */
