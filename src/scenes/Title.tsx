@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import titleUrl from "../assets/images/title.png";
 import { useAppStore } from "../store/useAppStore";
 
 /** タイトル画面。スペースキー（またはクリック）でメニュー画面へ */
@@ -15,10 +16,11 @@ export default function Title() {
 
   return (
     <div
-      className="flex min-h-screen cursor-pointer flex-col items-center justify-center gap-10 bg-gradient-to-b from-indigo-900 via-indigo-700 to-sky-600"
+      className="flex min-h-screen cursor-pointer flex-col items-center justify-center gap-10 bg-cover bg-center"
+      style={{ backgroundImage: `url(${titleUrl})` }}
       onClick={() => setScene("menu")}
     >
-      <div className="text-center">
+      <div className="rounded-3xl bg-black/40 px-12 py-8 text-center backdrop-blur-sm">
         <div className="mb-4 text-2xl font-bold text-yellow-200">しょうがくせいむけ タイピングゲーム</div>
         <h1 className="text-7xl font-black tracking-wide text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.4)]">
           アトス
