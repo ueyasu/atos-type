@@ -4,6 +4,13 @@ import { createWordBag, type WordTier } from "../data/words";
 import { useAppStore } from "../store/useAppStore";
 import { useGameStore } from "../store/useGameStore";
 import { useTyping } from "./useTyping";
+import {
+  playClearSound,
+  playEnemyAttackSound,
+  playEnemySwitchSound,
+  playGameOverSound,
+  playHeroAttackSound,
+} from "../utils/sound";
 
 /** 敵撃破後、次の敵が登場するまでの間 */
 const ENEMY_SWITCH_DELAY_MS = 500;
@@ -44,6 +51,7 @@ export function useBattle(): void {
   const checkHeroDefeated = () => {
     const state = useGameStore.getState();
     if (state.heroHp > 0 || state.endedAt !== null) return;
+    playGameOverSound();
     state.endBattle(false);
     scheduleTimeout(() => setScene("result"), RESULT_DELAY_MS);
   };
@@ -57,10 +65,12 @@ export function useBattle(): void {
       if (current.endedAt !== null) return; // 同時にゲームオーバーになった場合はそちらを優先
       current.advanceEnemy();
       if (isLast) {
+        playClearSound();
         const seconds = Math.round((Date.now() - current.startedAt) / 1000);
         recordClearTime(current.difficulty, seconds);
         scheduleTimeout(() => setScene("result"), RESULT_DELAY_MS);
       } else {
+        playEnemySwitchSound();
         resetTimer();
         current.setInputLocked(false);
         nextWord();
@@ -99,6 +109,7 @@ export function useBattle(): void {
 
       const enemy = ENEMIES[state.enemyIndex];
       if (result.accepted) {
+        playHeroAttackSound();
         const power = DIFFICULTY_INFO[state.difficulty].attackPower;
         state.heroAttacks(power, result.typed, result.remaining);
         const after = useGameStore.getState();
@@ -109,6 +120,7 @@ export function useBattle(): void {
         }
       } else {
         // ミスタイプ → 敵の攻撃
+        playEnemyAttackSound();
         state.enemyAttacks(enemy.attackDamage, true);
         resetTimer();
         checkHeroDefeated();
@@ -128,6 +140,7 @@ export function useBattle(): void {
       const total = enemy.attackIntervalMs * DIFFICULTY_INFO[state.difficulty].intervalScale;
       const remaining = deadlineRef.current - Date.now();
       if (remaining <= 0) {
+        playEnemyAttackSound();
         state.enemyAttacks(enemy.attackDamage, false);
         resetTimer();
         state.setEnemyTimerRatio(1);

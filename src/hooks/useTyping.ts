@@ -13,16 +13,28 @@ export interface TypingKeyResult extends TypingInputResult {
  */
 export function useTyping() {
   const jaStyle = useAppStore((s) => s.jaStyle);
+  const shStyle = useAppStore((s) => s.shStyle);
+  const shiStyle = useAppStore((s) => s.shiStyle);
+  const chiStyle = useAppStore((s) => s.chiStyle);
+  const tsuStyle = useAppStore((s) => s.tsuStyle);
+  const fuStyle = useAppStore((s) => s.fuStyle);
   const engineRef = useRef<RomajiTypingEngine | null>(null);
 
   /** 新しい単語を出題する */
   const startWord = useCallback(
     (kana: string): { remaining: string } => {
-      const engine = new RomajiTypingEngine(kana, { jaStyle });
+      const engine = new RomajiTypingEngine(kana, {
+        jaStyle,
+        shStyle,
+        shiStyle,
+        chiStyle,
+        tsuStyle,
+        fuStyle,
+      });
       engineRef.current = engine;
       return { remaining: engine.remaining };
     },
-    [jaStyle],
+    [jaStyle, shStyle, shiStyle, chiStyle, tsuStyle, fuStyle],
   );
 
   /** 1文字入力する */

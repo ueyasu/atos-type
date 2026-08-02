@@ -1,7 +1,7 @@
 import { Assets, Sprite, Texture } from "pixi.js";
 import type { BackgroundId, EnemyId } from "../data/enemies";
 
-import heroUrl from "../assets/images/hero.svg";
+import heroUrl from "../assets/images/hero.png";
 import slimeUrl from "../assets/images/slime.svg";
 import goblinUrl from "../assets/images/goblin.svg";
 import skeletonUrl from "../assets/images/skeleton.svg";

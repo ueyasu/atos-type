@@ -1,10 +1,10 @@
-import { RomajiTypingEngine } from "./src/lib/typingEngine.ts";
+import { RomajiTypingEngine, type TypingOptions } from "./src/lib/typingEngine.ts";
 import { WORDS } from "./src/data/words.ts";
 
 let failures = 0;
 
-function typeWord(kana: string, input: string, jaStyle: "ja" | "zya" = "ja") {
-  const engine = new RomajiTypingEngine(kana, { jaStyle });
+function typeWord(kana: string, input: string, options: TypingOptions = {}) {
+  const engine = new RomajiTypingEngine(kana, options);
   let acceptedAll = true;
   for (let i = 0; i < input.length; i++) {
     const r = engine.input(input[i]);
@@ -67,13 +67,47 @@ expect("ぱん → pann", typeWord("ぱん", "pann"), { acceptedAll: true, compl
 // じゃ系: 設定によるガイド切替・両表記受理
 expect("じゅぎょう ガイド(ja)", new RomajiTypingEngine("じゅぎょう", { jaStyle: "ja" }).guide, "jugyou");
 expect("じゅぎょう ガイド(zya)", new RomajiTypingEngine("じゅぎょう", { jaStyle: "zya" }).guide, "zyugyou");
-expect("じゅぎょう → jugyou", typeWord("じゅぎょう", "jugyou", "zya"), { acceptedAll: true, completed: true, early: false });
-expect("じゅぎょう → zyugyou", typeWord("じゅぎょう", "zyugyou", "ja"), { acceptedAll: true, completed: true, early: false });
+expect("じゅぎょう → jugyou", typeWord("じゅぎょう", "jugyou", { jaStyle: "zya" }), { acceptedAll: true, completed: true, early: false });
+expect("じゅぎょう → zyugyou", typeWord("じゅぎょう", "zyugyou", { jaStyle: "ja" }), { acceptedAll: true, completed: true, early: false });
 
-// 拗音バリエーション
-expect("きょうりゅう → kyouryuu", typeWord("きょうりゅう", "kyouryuu"), { acceptedAll: true, completed: true, early: false });
+// しゃ系: 設定によるガイド切替・両表記受理
+expect("しゃしん ガイド(sha)", new RomajiTypingEngine("しゃしん", { shStyle: "sha" }).guide, "shashin");
+expect("しゃしん ガイド(sya)", new RomajiTypingEngine("しゃしん", { shStyle: "sya" }).guide, "syashin");
 expect("しゃしん → shashin", typeWord("しゃしん", "shashin"), { acceptedAll: true, completed: true, early: false });
 expect("しゃしん → syasin", typeWord("しゃしん", "syasin"), { acceptedAll: true, completed: true, early: false });
+expect("しゃしん → syasin（sya設定）", typeWord("しゃしん", "syasin", { jaStyle: "ja", shStyle: "sya" }), { acceptedAll: true, completed: true, early: false });
+expect("しゃしん → shashin（sya設定）", typeWord("しゃしん", "shashin", { shStyle: "sya" }), { acceptedAll: true, completed: true, early: false });
+
+// し: shi / si
+expect("し ガイド(shi)", new RomajiTypingEngine("し").guide, "shi");
+expect("し ガイド(si)", new RomajiTypingEngine("し", { shiStyle: "si" }).guide, "si");
+expect("し → si", typeWord("し", "si", { shiStyle: "si" }), { acceptedAll: true, completed: true, early: false });
+
+// ち・ちゃ系: chi/ti, cha/tya
+expect("ち ガイド(chi)", new RomajiTypingEngine("ち").guide, "chi");
+expect("ち ガイド(ti)", new RomajiTypingEngine("ち", { chiStyle: "ti" }).guide, "ti");
+expect("おちゃ ガイド(cha)", new RomajiTypingEngine("おちゃ").guide, "ocha");
+expect("おちゃ ガイド(tya)", new RomajiTypingEngine("おちゃ", { chiStyle: "ti" }).guide, "otya");
+expect("おちゃ → tya", typeWord("おちゃ", "otya", { chiStyle: "ti" }), { acceptedAll: true, completed: true, early: false });
+expect("おちゃ → cha（ti設定）", typeWord("おちゃ", "ocha", { chiStyle: "ti" }), { acceptedAll: true, completed: true, early: false });
+
+// つ: tsu / tu
+expect("つ ガイド(tsu)", new RomajiTypingEngine("つ").guide, "tsu");
+expect("つ ガイド(tu)", new RomajiTypingEngine("つ", { tsuStyle: "tu" }).guide, "tu");
+expect("つくえ → tuku e → tukue", typeWord("つくえ", "tukue", { tsuStyle: "tu" }), { acceptedAll: true, completed: true, early: false });
+
+// ふ: fu / hu
+expect("ふ ガイド(fu)", new RomajiTypingEngine("ふ").guide, "fu");
+expect("ふ ガイド(hu)", new RomajiTypingEngine("ふ", { fuStyle: "hu" }).guide, "hu");
+expect("ふじ → huji", typeWord("ふじ", "huji", { fuStyle: "hu" }), { acceptedAll: true, completed: true, early: false });
+
+// じ: jaStyle と連動（zya → zi）
+expect("じ ガイド(ji)", new RomajiTypingEngine("じ").guide, "ji");
+expect("じ ガイド(zi)", new RomajiTypingEngine("じ", { jaStyle: "zya" }).guide, "zi");
+expect("ふじ → fuzi（jaStyle=zya）", typeWord("ふじ", "fuzi", { jaStyle: "zya" }), { acceptedAll: true, completed: true, early: false });
+
+// を は固定表記（wo）
+expect("を ガイド", new RomajiTypingEngine("を").guide, "wo");
 
 // むずかしい長文
 expect("ゆうしゃのつるぎ → yuushanotsurugi", typeWord("ゆうしゃのつるぎ", "yuushanotsurugi"), { acceptedAll: true, completed: true, early: false });

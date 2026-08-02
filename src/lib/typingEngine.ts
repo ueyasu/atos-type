@@ -6,11 +6,26 @@
  * を生成し、入力文字列の前置一致で正誤判定を行う。
  */
 
-/** 「じゃ・じゅ・じょ」のガイド表記設定 */
+/** 「じゃ・じゅ・じょ・じ」のガイド表記設定 */
 export type JaStyle = "ja" | "zya";
+/** 「しゃ・しゅ・しょ」のガイド表記設定 */
+export type ShStyle = "sha" | "sya";
+/** 「し」のガイド表記設定 */
+export type ShiStyle = "shi" | "si";
+/** 「ち・ちゃ・ちゅ・ちょ」のガイド表記設定 */
+export type ChiStyle = "chi" | "ti";
+/** 「つ」のガイド表記設定 */
+export type TsuStyle = "tsu" | "tu";
+/** 「ふ」のガイド表記設定 */
+export type FuStyle = "fu" | "hu";
 
 export interface TypingOptions {
   jaStyle?: JaStyle;
+  shStyle?: ShStyle;
+  shiStyle?: ShiStyle;
+  chiStyle?: ChiStyle;
+  tsuStyle?: TsuStyle;
+  fuStyle?: FuStyle;
 }
 
 export interface TypingInputResult {
@@ -64,7 +79,7 @@ const MORA_TABLE: Record<string, string[]> = {
   れ: ["re"],
   ろ: ["ro"],
   わ: ["wa"],
-  を: ["wo"],
+   を: ["wo"],
   が: ["ga"],
   ぎ: ["gi"],
   ぐ: ["gu"],
@@ -155,8 +170,36 @@ type MoraUnit =
   | { kind: "sokuon" }
   | { kind: "n" };
 
+/** ガイドの標準表記を配列の先頭に持ってくる（既に先頭なら変更しない） */
+function preferFirst(romaji: string[], preferred: string): string[] {
+  const idx = romaji.indexOf(preferred);
+  if (idx <= 0) return romaji;
+  return [preferred, ...romaji.filter((r) => r !== preferred)];
+}
+
+/** 設定に応じてガイドの標準表記を選ぶ */
+function preferredRomaji(key: string, options: TypingOptions): string | null {
+  switch (key) {
+    case "じゃ": return options.jaStyle === "zya" ? "zya" : "ja";
+    case "じゅ": return options.jaStyle === "zya" ? "zyu" : "ju";
+    case "じょ": return options.jaStyle === "zya" ? "zyo" : "jo";
+    case "じ": return options.jaStyle === "zya" ? "zi" : "ji";
+    case "しゃ": return options.shStyle === "sya" ? "sya" : "sha";
+    case "しゅ": return options.shStyle === "sya" ? "syu" : "shu";
+    case "しょ": return options.shStyle === "sya" ? "syo" : "sho";
+    case "し": return options.shiStyle === "si" ? "si" : "shi";
+    case "ち": return options.chiStyle === "ti" ? "ti" : "chi";
+    case "ちゃ": return options.chiStyle === "ti" ? "tya" : "cha";
+    case "ちゅ": return options.chiStyle === "ti" ? "tyu" : "chu";
+    case "ちょ": return options.chiStyle === "ti" ? "tyo" : "cho";
+    case "つ": return options.tsuStyle === "tu" ? "tu" : "tsu";
+    case "ふ": return options.fuStyle === "hu" ? "hu" : "fu";
+    default: return null;
+  }
+}
+
 /** ひらがな文字列をモーラ単位に分解する */
-function parseKana(kana: string, jaStyle: JaStyle): MoraUnit[] {
+function parseKana(kana: string, options: TypingOptions): MoraUnit[] {
   const units: MoraUnit[] = [];
   for (let i = 0; i < kana.length; i++) {
     const ch = kana[i];
@@ -175,11 +218,9 @@ function parseKana(kana: string, jaStyle: JaStyle): MoraUnit[] {
     if (!romaji) {
       throw new Error(`未対応の仮名です: ${key}`);
     }
-    // 「じゃ・じゅ・じょ」は設定に応じてガイドの標準表記を入れ替える
-    const reordered =
-      (key === "じゃ" || key === "じゅ" || key === "じょ") && jaStyle === "zya"
-        ? [...romaji].sort((a, b) => (a.startsWith("z") ? 0 : 1) - (b.startsWith("z") ? 0 : 1))
-        : romaji;
+    // 設定に応じてガイドの標準表記を入れ替える
+    const preferred = preferredRomaji(key, options);
+    const reordered = preferred ? preferFirst(romaji, preferred) : romaji;
     units.push({ kind: "mora", kana: key, romaji: reordered });
   }
   return units;
@@ -228,7 +269,7 @@ export class RomajiTypingEngine {
 
   constructor(kana: string, options: TypingOptions = {}) {
     this.kana = kana;
-    this.patterns = buildPatterns(parseKana(kana, options.jaStyle ?? "ja"));
+    this.patterns = buildPatterns(parseKana(kana, options));
   }
 
   /** 1文字入力し、正誤と単語完成を返す */
