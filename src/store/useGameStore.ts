@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Difficulty } from "../data/words";
-import { ENEMIES, HERO_MAX_HP } from "../data/enemies";
+import { ENEMIES, HERO_MAX_HP, enemyStats } from "../data/enemies";
 
 /**
  * バトル進行状態。
@@ -22,6 +22,8 @@ interface GameState {
   romajiRemaining: string;
   /** 敵の攻撃タイマーの残り割合（0〜1） */
   enemyTimerRatio: number;
+  /** インフィニティ: ドラゴンを倒してループした回数 */
+  loopCount: number;
   typedCount: number;
   missCount: number;
   startedAt: number;
@@ -45,7 +47,7 @@ export const useGameStore = create<GameState>((set) => ({
   difficulty: "normal",
   heroHp: HERO_MAX_HP,
   enemyIndex: 0,
-  enemyHp: ENEMIES[0].maxHp,
+  enemyHp: enemyStats(0, 0, "normal").maxHp,
   heroAttackSeq: 0,
   enemyAttackSeq: 0,
   inputLocked: false,
@@ -53,6 +55,7 @@ export const useGameStore = create<GameState>((set) => ({
   romajiTyped: "",
   romajiRemaining: "",
   enemyTimerRatio: 1,
+  loopCount: 0,
   typedCount: 0,
   missCount: 0,
   startedAt: 0,
@@ -64,7 +67,7 @@ export const useGameStore = create<GameState>((set) => ({
       difficulty,
       heroHp: HERO_MAX_HP,
       enemyIndex: 0,
-      enemyHp: ENEMIES[0].maxHp,
+      enemyHp: enemyStats(0, 0, difficulty).maxHp,
       heroAttackSeq: 0,
       enemyAttackSeq: 0,
       inputLocked: false,
@@ -72,6 +75,7 @@ export const useGameStore = create<GameState>((set) => ({
       romajiTyped: "",
       romajiRemaining: "",
       enemyTimerRatio: 1,
+      loopCount: 0,
       typedCount: 0,
       missCount: 0,
       startedAt: Date.now(),
@@ -102,9 +106,14 @@ export const useGameStore = create<GameState>((set) => ({
     set((s) => {
       const next = s.enemyIndex + 1;
       if (next >= ENEMIES.length) {
+        // インフィニティ: クリアはなく、ドラゴンを倒すとスライムからやり直す（HPもループごとに1.3倍）
+        if (s.difficulty === "infinity") {
+          const loopCount = s.loopCount + 1;
+          return { enemyIndex: 0, enemyHp: enemyStats(0, loopCount, "infinity").maxHp, enemyTimerRatio: 1, loopCount };
+        }
         return { cleared: true, endedAt: Date.now(), inputLocked: true };
       }
-      return { enemyIndex: next, enemyHp: ENEMIES[next].maxHp, enemyTimerRatio: 1 };
+      return { enemyIndex: next, enemyHp: enemyStats(next, s.loopCount, s.difficulty).maxHp, enemyTimerRatio: 1 };
     }),
 
   endBattle: (cleared) => set({ cleared, endedAt: Date.now(), inputLocked: true }),

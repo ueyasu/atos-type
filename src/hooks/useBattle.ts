@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { DIFFICULTY_INFO, ENEMIES, wordTierFor } from "../data/enemies";
+import { DIFFICULTY_INFO, ENEMIES, enemyStats, wordTierFor } from "../data/enemies";
 import { createWordBag, type WordTier } from "../data/words";
 import { useAppStore } from "../store/useAppStore";
 import { useGameStore } from "../store/useGameStore";
@@ -16,6 +16,8 @@ import {
 const ENEMY_SWITCH_DELAY_MS = 500;
 /** バトル終了後、スコア表示画面へ遷移するまでの間 */
 const RESULT_DELAY_MS = 1500;
+/** 敵交代後に新しい単語が出た直後、ミスタイプをペナルティなしで受け流す猶予時間（ミリ秒） */
+const GRACE_PERIOD_MS = 1500;
 
 /**
  * バトルのゲームロジック。
@@ -25,8 +27,10 @@ export function useBattle(): void {
   const { startWord, input } = useTyping();
   const setScene = useAppStore((s) => s.setScene);
   const recordClearTime = useAppStore((s) => s.recordClearTime);
+  const recordInfinityScore = useAppStore((s) => s.recordInfinityScore);
   const bagsRef = useRef<Record<WordTier, () => string> | null>(null);
   const deadlineRef = useRef(0);
+  const graceUntilRef = useRef(0);
   const timeoutsRef = useRef<number[]>([]);
 
   const scheduleTimeout = (fn: () => void, ms: number) => {
@@ -34,10 +38,9 @@ export function useBattle(): void {
   };
 
   const resetTimer = () => {
-    const { difficulty, enemyIndex } = useGameStore.getState();
-    const enemy = ENEMIES[enemyIndex];
+    const state = useGameStore.getState();
     deadlineRef.current =
-      Date.now() + enemy.attackIntervalMs * DIFFICULTY_INFO[difficulty].intervalScale;
+      Date.now() + enemyStats(state.enemyIndex, state.loopCount, state.difficulty).intervalMs;
   };
 
   const nextWord = () => {
@@ -53,13 +56,18 @@ export function useBattle(): void {
     if (state.heroHp > 0 || state.endedAt !== null) return;
     playGameOverSound();
     state.endBattle(false);
+    // インフィニティはクリアが無いため、タイプした文字数をベストスコアとして記録
+    if (state.difficulty === "infinity") {
+      recordInfinityScore(state.typedCount);
+    }
     scheduleTimeout(() => setScene("result"), RESULT_DELAY_MS);
   };
 
   const defeatEnemyFlow = () => {
     const state = useGameStore.getState();
     state.setInputLocked(true);
-    const isLast = state.enemyIndex >= ENEMIES.length - 1;
+    // インフィニティはクリアが無く、ドラゴン撃破後も戦いが続く
+    const isLast = state.difficulty !== "infinity" && state.enemyIndex >= ENEMIES.length - 1;
     scheduleTimeout(() => {
       const current = useGameStore.getState();
       if (current.endedAt !== null) return; // 同時にゲームオーバーになった場合はそちらを優先
@@ -74,6 +82,8 @@ export function useBattle(): void {
         resetTimer();
         current.setInputLocked(false);
         nextWord();
+        // 新しい単語が表示されてから猶予時間の間は、ミスタイプをペナルティなしで受け流す
+        graceUntilRef.current = Date.now() + GRACE_PERIOD_MS;
       }
     }, ENEMY_SWITCH_DELAY_MS);
   };
@@ -107,7 +117,6 @@ export function useBattle(): void {
       const result = input(key);
       if (!result) return;
 
-      const enemy = ENEMIES[state.enemyIndex];
       if (result.accepted) {
         playHeroAttackSound();
         const power = DIFFICULTY_INFO[state.difficulty].attackPower;
@@ -119,9 +128,12 @@ export function useBattle(): void {
           nextWord();
         }
       } else {
+        // 敵交代後の猶予時間中は、正当な入力のみ受け付ける（ミスタイプは無視）
+        if (Date.now() < graceUntilRef.current) return;
         // ミスタイプ → 敵の攻撃
         playEnemyAttackSound();
-        state.enemyAttacks(enemy.attackDamage, true);
+        const { damage } = enemyStats(state.enemyIndex, state.loopCount, state.difficulty);
+        state.enemyAttacks(damage, true);
         resetTimer();
         checkHeroDefeated();
       }
@@ -136,17 +148,16 @@ export function useBattle(): void {
     const id = window.setInterval(() => {
       const state = useGameStore.getState();
       if (state.inputLocked || state.endedAt !== null) return;
-      const enemy = ENEMIES[state.enemyIndex];
-      const total = enemy.attackIntervalMs * DIFFICULTY_INFO[state.difficulty].intervalScale;
+      const stats = enemyStats(state.enemyIndex, state.loopCount, state.difficulty);
       const remaining = deadlineRef.current - Date.now();
       if (remaining <= 0) {
         playEnemyAttackSound();
-        state.enemyAttacks(enemy.attackDamage, false);
+        state.enemyAttacks(stats.damage, false);
         resetTimer();
         state.setEnemyTimerRatio(1);
         checkHeroDefeated();
       } else {
-        state.setEnemyTimerRatio(remaining / total);
+        state.setEnemyTimerRatio(remaining / stats.intervalMs);
       }
     }, 100);
     return () => window.clearInterval(id);

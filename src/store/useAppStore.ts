@@ -26,6 +26,8 @@ interface AppState {
   caseStyle: CaseStyle;
   /** 難易度ごとのベストクリアタイム（秒） */
   bestTimes: Partial<Record<Difficulty, number>>;
+  /** インフィニティのベストスコア（タイプした文字数） */
+  bestInfinityScore: number | undefined;
   setScene: (scene: Scene) => void;
   setJaStyle: (jaStyle: JaStyle) => void;
   setShStyle: (shStyle: ShStyle) => void;
@@ -35,6 +37,7 @@ interface AppState {
   setFuStyle: (fuStyle: FuStyle) => void;
   setCaseStyle: (caseStyle: CaseStyle) => void;
   recordClearTime: (difficulty: Difficulty, seconds: number) => void;
+  recordInfinityScore: (count: number) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -49,6 +52,7 @@ export const useAppStore = create<AppState>()(
       fuStyle: "fu",
       caseStyle: "lower",
       bestTimes: {},
+      bestInfinityScore: undefined,
       setScene: (scene) => set({ scene }),
       setJaStyle: (jaStyle) => set({ jaStyle }),
       setShStyle: (shStyle) => set({ shStyle }),
@@ -61,6 +65,12 @@ export const useAppStore = create<AppState>()(
         const prev = get().bestTimes[difficulty];
         if (prev === undefined || seconds < prev) {
           set({ bestTimes: { ...get().bestTimes, [difficulty]: seconds } });
+        }
+      },
+      recordInfinityScore: (count) => {
+        const prev = get().bestInfinityScore;
+        if (prev === undefined || count > prev) {
+          set({ bestInfinityScore: count });
         }
       },
     }),
@@ -76,6 +86,7 @@ export const useAppStore = create<AppState>()(
         fuStyle: state.fuStyle,
         caseStyle: state.caseStyle,
         bestTimes: state.bestTimes,
+        bestInfinityScore: state.bestInfinityScore,
       }),
     },
   ),

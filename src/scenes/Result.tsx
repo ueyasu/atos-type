@@ -7,6 +7,7 @@ import BigButton from "../components/common/BigButton";
 export default function Result() {
   const setScene = useAppStore((s) => s.setScene);
   const bestTimes = useAppStore((s) => s.bestTimes);
+  const bestInfinityScore = useAppStore((s) => s.bestInfinityScore);
   const startBattle = useGameStore((s) => s.startBattle);
   const difficulty = useGameStore((s) => s.difficulty);
   const typedCount = useGameStore((s) => s.typedCount);
@@ -18,8 +19,10 @@ export default function Result() {
   const totalKeys = typedCount + missCount;
   const accuracy = totalKeys === 0 ? 100 : Math.round((typedCount / totalKeys) * 1000) / 10;
   const seconds = endedAt !== null ? Math.round((endedAt - startedAt) / 1000) : 0;
+  const isInfinity = difficulty === "infinity";
   const best = bestTimes[difficulty];
   const isNewRecord = cleared && best !== undefined && seconds <= best;
+  const isNewBestScore = isInfinity && typedCount === bestInfinityScore;
 
   const retry = () => {
     startBattle(difficulty);
@@ -56,6 +59,11 @@ export default function Result() {
         {cleared && best !== undefined && (
           <div className="mt-4 text-center font-bold text-orange-500">
             ベストタイム: {best} びょう{isNewRecord && "（しんきろく！）"}
+          </div>
+        )}
+        {isInfinity && bestInfinityScore !== undefined && (
+          <div className="mt-4 text-center font-bold text-orange-500">
+            ベストスコア: {bestInfinityScore} もじ{isNewBestScore && "（しんきろく！）"}
           </div>
         )}
       </div>

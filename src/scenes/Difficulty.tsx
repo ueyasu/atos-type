@@ -8,12 +8,14 @@ const DIFFICULTY_COLORS: Record<Difficulty, string> = {
   easy: "border-green-500 bg-green-50",
   normal: "border-blue-500 bg-blue-50",
   hard: "border-red-500 bg-red-50",
+  infinity: "border-purple-500 bg-purple-50",
 };
 
 /** 難易度選択画面。選択するとタイピング（バトル）画面へ遷移する */
 export default function Difficulty() {
   const setScene = useAppStore((s) => s.setScene);
   const bestTimes = useAppStore((s) => s.bestTimes);
+  const bestInfinityScore = useAppStore((s) => s.bestInfinityScore);
   const startBattle = useGameStore((s) => s.startBattle);
 
   const start = (difficulty: Difficulty) => {
@@ -27,7 +29,21 @@ export default function Difficulty() {
       <div className="flex gap-6">
         {(Object.keys(DIFFICULTY_INFO) as Difficulty[]).map((key) => {
           const info = DIFFICULTY_INFO[key];
-          const best = bestTimes[key];
+          // インフィニティはむずかしいをクリア（ベストタイムあり）すると解放される
+          if (key === "infinity" && bestTimes.hard === undefined) {
+            return (
+              <div
+                key={key}
+                className="w-60 rounded-2xl border-b-8 border-slate-500 bg-slate-200/90 p-6 text-center opacity-80 shadow-lg"
+              >
+                <div className="text-3xl font-black text-slate-400">？？？</div>
+                <div className="mt-3 text-sm font-bold text-slate-500">
+                  「むずかしい」をクリアすると あらわれるよ
+                </div>
+              </div>
+            );
+          }
+          const best = key === "infinity" ? bestInfinityScore : bestTimes[key];
           return (
             <button
               key={key}
@@ -38,7 +54,13 @@ export default function Difficulty() {
               <div className="text-3xl font-black text-slate-800">{info.label}</div>
               <div className="mt-3 text-sm font-bold text-slate-600">{info.description}</div>
               <div className="mt-4 text-xs text-slate-500">
-                {best !== undefined ? `ベストタイム: ${best}びょう` : "まだクリアしていません"}
+                {key === "infinity"
+                  ? best !== undefined
+                    ? `ベストスコア: ${best} もじ`
+                    : "まだプレイしていません"
+                  : best !== undefined
+                    ? `ベストタイム: ${best} びょう`
+                    : "まだクリアしていません"}
               </div>
             </button>
           );

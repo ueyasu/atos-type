@@ -1,12 +1,12 @@
-/** 難易度。easy=かんたん normal=ふつう hard=むずかしい */
-export type Difficulty = "easy" | "normal" | "hard";
+/** 難易度。easy=かんたん normal=ふつう hard=むずかしい infinity=インフィニティ */
+export type Difficulty = "easy" | "normal" | "hard" | "infinity";
 
 /**
  * 出題単語のランク。
  * ゴーレム・ドラゴンは「一つ高い難易度」の問題を出すため、
  * むずかしいの一段階上として expert（7文字以上の単語）を持つ。
  */
-export type WordTier = Difficulty | "expert";
+export type WordTier = "easy" | "normal" | "hard" | "expert";
 
 /** かんたん: 一文字のローマ字入力（清音46文字） */
 const EASY_WORDS = [
