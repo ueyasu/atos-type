@@ -24,22 +24,34 @@ npm run preview  # 本番ビルドのプレビュー
 npm test         # タイピングエンジンの単体テスト
 ```
 
+### GitHub Pages での公開
+
+- リポジトリ `ueyasu/atos-type` で公開中: <https://ueyasu.github.io/atos-type/>
+- 純クライアントサイドの静的サイト（状態は localStorage）のため特別なサーバ不要。
+- `vite.config.ts` の `base: "/atos-type/"` により `/atos-type/` サブパス配下で動作する（favicon は `%BASE_URL%` 参照）。
+- `.github/workflows/deploy.yml` が main ブランチへの push を検知し、`npm ci` → `npm run build` → GitHub Pages へ自動デプロイする。
+- 初回のみリポジトリ設定 → **Pages → Source: GitHub Actions** の有効化が必要。
+
 ## 3. ディレクトリ構成
 
 ```
+.github/workflows/deploy.yml   # GitHub Pages への自動デプロイ
 src/
-├── assets/images/       # 自作SVGアセット（主人公・敵5体・背景3種・斬撃）
+├── assets/
+│   ├── images/          # 主人公hero.png（透過PNG）＋敵5体・背景3種・斬撃（自作SVG）
+│   └── se/              # 効果音（mp3 5種）
 ├── components/
 │   ├── common/BigButton.tsx    # 画面共通の大ボタン
 │   └── typing/                 # タイピング画面用UI
 │       ├── StatusBars.tsx      # HPバー・敵攻撃タイマーバー
-│       └── TypingPanel.tsx     # 出題文字・ローマ字ガイド表示
+│       ├── HandPictogram.tsx   # 手のワイヤーピクトグラム（使う指に赤丸を表示）
+│       └── TypingPanel.tsx     # 出題文字・ローマ字ガイド・手のピクトグラム表示
 ├── data/
 │   ├── words.ts         # 難易度別単語リスト・単語袋（シャッフル出題）
 │   └── enemies.ts       # 敵5体の定義・難易度情報・出題ランク解決
 ├── hooks/
 │   ├── useTyping.ts     # タイピングエンジンのReactラッパー
-│   └── useBattle.ts     # キー入力判定・敵攻撃タイマー・バトル進行
+│   └── useBattle.ts     # キー入力判定・敵攻撃タイマー・バトル進行・効果音発火
 ├── lib/
 │   └── typingEngine.ts  # ローマ字タイピング判定エンジン（React非依存）
 ├── pixi/
@@ -53,6 +65,9 @@ src/
 ├── store/
 │   ├── useAppStore.ts   # シーン・設定・ベストタイム（localStorage永続化）
 │   └── useGameStore.ts  # バトル進行状態
+├── utils/
+│   ├── keyFinger.ts     # キーごとの使用指（標準タッチタイピング準拠）
+│   └── sound.ts         # 効果音の再生（HTMLAudioElement）
 ├── App.tsx              # シーンのルーティング
 └── main.tsx             # エントリーポイント（StrictMode）
 test-engine.ts           # タイピングエンジン単体テスト
@@ -78,10 +93,16 @@ test-engine.ts           # タイピングエンジン単体テスト
 | 状態 | 内容 |
 |---|---|
 | `scene` | 現在のシーン（永続化しない） |
-| `jaStyle` | 「じゃ・じゅ・じょ」のガイド表記設定（`"ja"` / `"zya"`） |
+| `jaStyle` | 「じゃ・じゅ・じょ・じ」のガイド表記（`"ja"` / `"zya"`） |
+| `shStyle` | 「しゃ・しゅ・しょ」のガイド表記（`"sha"` / `"sya"`） |
+| `shiStyle` | 「し」のガイド表記（`"shi"` / `"si"`） |
+| `chiStyle` | 「ち・ちゃ・ちゅ・ちょ」のガイド表記（`"chi"` / `"ti"`） |
+| `tsuStyle` | 「つ」のガイド表記（`"tsu"` / `"tu"`） |
+| `fuStyle` | 「ふ」のガイド表記（`"fu"` / `"hu"`） |
+| `caseStyle` | ローマ字ガイドの大文字/小文字表示（`"lower"` / `"upper"`、入力自体は不変） |
 | `bestTimes` | 難易度ごとのベストクリアタイム（秒） |
 
-- `persist` ミドルウェアで localStorage（キー: `atos-battle-typing`）に保存。`partialize` で `jaStyle` と `bestTimes` のみ永続化する。
+- `persist` ミドルウェアで localStorage（キー: `atos-battle-typing`）に保存。`partialize` で上記の設定7種と `bestTimes` のみ永続化する（`scene` は永続化しない）。
 
 ### useGameStore（バトル進行）
 
@@ -116,15 +137,26 @@ React 非依存の純粋なクラス `RomajiTypingEngine` として実装。
 - 後続が**な行**を含む子音の場合は `n` 1回でも受理（例: こんにちは → `konnitiha`。`n`+`ni`=`nni` で曖昧さがないため）。
 - 語尾の「ん」は `n` 1回で完成とする（例: ぱん → `pan`）。
 
-### 設定の注入
+### 設定の注入（`TypingOptions`）
 
-`jaStyle`（設定画面のローマ字揺れルール）をコンストラクタに注入する。「じゃ・じゅ・じょ」のバリアントの並び順が変わりガイドの標準表記が切り替わる（`jugyou` ↔ `zyugyou`）。**どちらの表記の入力も常に正解**となる（小学生向けのため寛容な判定）。
+設定画面のローマ字揺れルールをコンストラクタに注入する。`preferredRomaji()` が各モーラのガイド標準表記を設定に応じて入れ替える。**どの設定でも別表記の入力は常に正解**となる（小学生向けのため寛容な判定）。
+
+| 設定 | 対象 | ガイド表記の切り替え |
+|---|---|---|
+| `jaStyle` | じゃ・じゅ・じょ・じ | `ja/ju/jo/ji` ↔ `zya/zyu/zyo/zi` |
+| `shStyle` | しゃ・しゅ・しょ | `sha/shu/sho` ↔ `sya/syu/syo` |
+| `shiStyle` | し | `shi` ↔ `si` |
+| `chiStyle` | ち・ちゃ・ちゅ・ちょ | `chi/cha/chu/cho` ↔ `ti/tya/tyu/tyo` |
+| `tsuStyle` | つ | `tsu` ↔ `tu` |
+| `fuStyle` | ふ | `fu` ↔ `hu` |
+
+大文字/小文字表示（`caseStyle`）はエンジン外の表示レイヤーで対応する。ガイドは常に小文字で生成され、`TypingPanel` が `toUpperCase()` で大文字表示に切り替える（入力判定は大文字小文字どちらでも受理）。
 
 ### テスト
 
 `test-engine.ts` で以下を検証する（`npm test`）。
 
-- 各種表記ゆれ・促音・ん の判定（全38項目）
+- 各種表記ゆれ・促音・ん の判定と、全設定のガイド表記切り替え（全60項目）
 - 出題単語リストの条件検証（ふつう = 5モーラ以内かつ清音のみ、むずかしい = 濁音/半濁音/拗音を含む、expert = 7モーラ以上、全単語が変換可能）
 
 ## 7. バトル進行ロジック（`src/hooks/useBattle.ts`）
@@ -147,6 +179,18 @@ React 非依存の純粋なクラス `RomajiTypingEngine` として実装。
 - 敵HP 0 → 入力ロック → 0.5 秒後に `advanceEnemy`（次の敵 or `cleared=true`）→ タイマーリセット・ロック解除・次単語出題。
 - 全5体撃破 → ベストタイム記録 → 1.5 秒後にスコア表示へ。
 - 主人公HP 0 → `endBattle(false)` → 1.5 秒後にスコア表示へ。クリアとゲームオーバーが同時に発生した場合はゲームオーバーを優先する。
+
+### 効果音
+
+`src/utils/sound.ts` が HTMLAudioElement を先頭から再生する（再生不可環境では無音）。音源は `src/assets/se/*.mp3`（外部素材、商用利用可のフリー音源）。
+
+| 効果音 | ファイル | 発火タイミング |
+|---|---|---|
+| 主人公の攻撃 | 剣で斬る2.mp3 | 正タイプ時 |
+| 敵の攻撃 | 軽いパンチ1.mp3 | ミスタイプ・時間切れ時 |
+| 敵の交代 | 踏み込む.mp3 | 敵撃破で次の敵が登場する時 |
+| ゲームクリア | ラッパのファンファーレ.mp3 | クリア時 |
+| ゲームオーバー | 呪いの旋律.mp3 | ゲームオーバー時 |
 
 ### 出題ランクの解決（`wordTierFor`）
 
@@ -172,6 +216,11 @@ React 非依存の純粋なクラス `RomajiTypingEngine` として実装。
 | `heroAttackSeq` 増加 | `heroAttack`（主人公の突進＋斬撃エフェクト＋敵赤フラッシュ） |
 | `enemyAttackSeq` 増加 | `enemyAttack`（敵の突進＋主人公赤フラッシュ＋振動） |
 | `heroHp === 0` | `heroDefeated`（主人公が倒れる） |
+
+### タイピングUI（React側）
+
+- **手のピクトグラム（`TypingPanel.tsx` + `HandPictogram.tsx`）**: 左右の手のワイヤーピクトグラム（インライン SVG）を表示し、次に押すキーを打つ指の指先に赤丸を表示する。指の割り当ては `utils/keyFinger.ts`（標準タッチタイピングのホームポジション準拠）で、未割り当てキー（`z` など打ちにくいキー）は表示しない。赤丸は `animate` で半径 12→42px にパルスする。
+- **ローマ字ガイドの大文字/小文字**: `caseStyle` 設定に応じてガイドを `toUpperCase()` で大文字表示する（入力判定は不変）。
 
 ### アニメーション（`pixi/animations.ts`）
 
@@ -208,11 +257,18 @@ React StrictMode（開発時）では effect が二重実行されるため、�
 - `hard`: 濁音・半濁音・拗音を含む単語40語
 - `expert`: 7モーラ以上の単語15語（hard 時のゴーレム・ドラゴン専用）
 
-## 10. グラフィックアセット
+## 10. グラフィック・音声アセット
 
-- `src/assets/images/*.svg`: 全て自作のフラットデザイン SVG（外部素材不使用・ライセンスフリー）。Vite の asset import 経由で PixiJS `Assets.load` に渡す。
+### 画像
+
+- **主人公 `hero.png`**: AI 生成画像（Gemini）から背景を除去した透過 PNG（935×572）。ImageMagick のフラッドフィル＋連結成分マスクで切り出し。`DISPLAY_HEIGHTS.hero = 185px`（幅はアスペクト比維持で約 302px）で表示。
+- **敵5体・背景3種・斬撃 `*.svg`**: 自作のフラットデザイン SVG（外部素材不使用・ライセンスフリー）。Vite の asset import 経由で PixiJS `Assets.load` に渡す。
 - 幅・高さ属性を明示しており、PixiJS が適切な解像度でラスタライズする（キャラクター 240px、背景 960×540）。
 - 背景グラデーションにはフォールバック色（`fill="url(#id) #rrggbb"`）を指定。
+
+### 効果音（`src/assets/se/*.mp3`）
+
+外部フリー音源（商用利用可）5種。`utils/sound.ts` がバトル進行に合わせて再生する（§7 効果音を参照）。
 
 ## 11. スコア集計
 

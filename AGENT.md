@@ -1,6 +1,7 @@
 # 小学生向けタイピングゲーム アトス バトルタイピング
 
 このプロジェクトは、小学生向けタイピングゲーム「アトス バトルタイピング」のプロジェクトである。
+実装の詳細（技術スタック・ディレクトリ構成・エンジン仕様など）は [docs/implementation.md](docs/implementation.md) を参照。
 
 ## ゲームの概要
 
@@ -51,22 +52,13 @@
 
 ## アーキテクチャ
 
-- **技術スタック**
-    - **UI / 全体管理**: React + TypeScript + Vite
-        - DOM要素が適しているタイトル、設定、メニュー、スコア表示などのUIを構築。
-    - **バトル描画エンジン**: PixiJS (`pixi.js`)
-        - バトルエリアの描画を担当。WebGLを利用した高速な描画を行う。
-    - **アニメーションライブラリ**: GSAP (GreenSock Animation Platform)
-        - PixiJS内のオブジェクト（主人公・敵の画像）に対して、CSSアニメーションよりも複雑でタイミング制御が容易なTweenアニメーション（移動、回転、拡縮）を適用する。
-    - **スタイリング**: Tailwind CSS
-    - **状態管理**: Zustand
-        - プレイヤーHP、敵のHP、進行度、スコア、入力設定を管理。
+- **技術スタック**: React + TypeScript + Vite / PixiJS（バトル描画）/ GSAP（Tweenアニメーション）/ Tailwind CSS（スタイリング）/ Zustand（状態管理）。詳細は docs §1 を参照。
 - **コアモジュール設計**
     - **Scene Manager (React)**: 各画面コンポーネントを切り替える。
     - **Battle Stage Component (PixiJS + GSAP)**:
         - Reactコンテナ内にPixiJSキャンバスを展開。
         - Zustandのステートを監視し、イベントに応じてGSAPでアニメーションを発火させる。
-            - 例: `isHeroAttacking`フラグが立ったら、GSAPで主人公のX座標を右に動かし、元の位置に戻す。
+            - 例: `heroAttackSeq` カウンタが増加したら、GSAPで主人公のX座標を右に動かし、元の位置に戻す。
     - **Typing Engine (タイピング判定)**:
         - タイピング判定機構を実装する。設定画面の「ローマ字揺れルール」を注入し、正誤判定を行う
         - ひらがな→ローマ字のモーラ変換テーブルから正解の全表記（訓令式/ヘボン式、`x` 付き拗音、促音の二重子音化、長音、`ん`）を生成し、前置一致で正誤判定する
@@ -75,44 +67,17 @@
 - **データ永続化（ストレージ）**
     - `localStorage` を使用（設定情報、ハイスコアなど。機微情報は扱わない）。
 
-### ディレクトリ構成案
+### ディレクトリ構成
 
-以下は例であり、必ず従う必要は無い。
+現状の構成は [docs/implementation.md](docs/implementation.md) §3 を参照。要点は以下のとおり。
 
-```
-src/
-├── assets/              # 静的ファイル群
-│   ├── images/          # 主人公・敵の1枚絵、エフェクト（PNG/SVG）
-│   └── sounds/          # BGM、攻撃SE、ダメージSE
-├── components/          # 汎用・UIコンポーネント (React)
-│   ├── common/          # ボタン、タイトルロゴなど画面を問わず使うUI
-│   └── typing/          # HPバー、入力文字列パネルなどタイピング画面用UI
-├── data/                # マスターデータ
-│   ├── words.ts         # 難易度別の単語・文章リスト（かんたん、ふつう、むずかしい）
-│   └── enemies.ts       # 敵5体のデータ（名前、最大HP、画像パス、出現難易度など）
-├── hooks/               # カスタムフック (React)
-│   ├── useTyping.ts     # libのタイピングエンジンをReactで扱いやすくするフック
-│   └── useBattle.ts     # 敵の攻撃タイマーやダメージ処理などのゲームロジック
-├── lib/                 # 外部ライブラリのラッパー
-│   └── typingEngine.ts  # `romaji-typing` 等の初期化、設定画面のルール注入ロジック
-├── pixi/                # バトル描画エンジン (PixiJS + GSAP)
-│   ├── core.ts          # Pixi.Applicationの初期化・破棄などの基本設定
-│   ├── animations.ts    # GSAPのTweenアニメーション定義（待機呼吸、攻撃前進、被弾揺れなど）
-│   └── entities/        # 描画オブジェクトの生成ロジック（Hero, Enemy, Effects）
-├── scenes/              # 各画面のルートコンポーネント
-│   ├── Title.tsx
-│   ├── Menu.tsx
-│   ├── Settings.tsx
-│   ├── Difficulty.tsx
-│   ├── Battle.tsx       # タイピング画面（PixiJSのCanvasとReactのUIを統合する中核）
-│   └── Result.tsx
-├── store/               # Zustandによるグローバル状態管理
-│   ├── useGameStore.ts  # バトル進行状態（自陣HP、敵HP、現在の敵インデックス、スコア）
-│   └── useAppStore.ts   # アプリ全体の設定（ローマ字の揺れ設定、音量など。localStorageと同期）
-├── utils/               # 汎用ヘルパー関数
-│   └── storage.ts       # localStorageの安全な読み書き用ラッパー
-├── App.tsx              # シーンのルーティング（画面遷移の管理）
-└── main.tsx             # アプリケーションのエントリーポイント
-```
+- `src/scenes/` … 各画面（タイトル・メニュー・設定・難易度・バトル・スコア）
+- `src/pixi/` … バトル描画エンジン（PixiJS + GSAP）
+- `src/lib/typingEngine.ts` … ローマ字タイピング判定エンジン（React非依存）
+- `src/hooks/` … タイピング・バトル進行ロジック
+- `src/store/` … Zustand 状態管理（localStorage 永続化）
+- `src/data/` … 単語・敵のマスターデータ
+- `src/assets/` … 画像（images/）と効果音（se/）
+- `test-engine.ts` … タイピングエンジン単体テスト（`node test-engine.ts`）
 
 
