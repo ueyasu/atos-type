@@ -48,7 +48,7 @@ src/
 │       └── TypingPanel.tsx     # 出題文字・ローマ字ガイド・手のピクトグラム表示
 ├── data/
 │   ├── words.ts         # 難易度別単語リスト・単語袋（シャッフル出題）
-│   └── enemies.ts       # 敵5体の定義・難易度情報・出題ランク解決
+│   └── enemies.ts       # 敵5体の定義・難易度情報・出題ランク解決・インフィニティの成長計算
 ├── hooks/
 │   ├── useTyping.ts     # タイピングエンジンのReactラッパー
 │   └── useBattle.ts     # キー入力判定・敵攻撃タイマー・バトル進行・効果音発火
@@ -85,6 +85,7 @@ test-engine.ts           # タイピングエンジン単体テスト
 - シーンは `useAppStore.scene` が保持し、`App.tsx` が switch で描画を切り替える。
 - シーン状態は永続化せず、起動時は常にタイトルから開始する。
 - バトル終了（全5体撃破 = クリア、または主人公HP 0 = ゲームオーバー）の 1.5 秒後にスコア表示へ自動遷移する。
+- インフィニティはクリアがなく、ドラゴン撃破後もスライムからループし続け、主人公HP 0（ゲームオーバー）でのみ終了する。
 
 ## 5. 状態管理（Zustand）
 
@@ -101,8 +102,9 @@ test-engine.ts           # タイピングエンジン単体テスト
 | `fuStyle` | 「ふ」のガイド表記（`"fu"` / `"hu"`） |
 | `caseStyle` | ローマ字ガイドの大文字/小文字表示（`"lower"` / `"upper"`、入力自体は不変） |
 | `bestTimes` | 難易度ごとのベストクリアタイム（秒） |
+| `bestInfinityScore` | インフィニティのベストスコア（タイプした文字数） |
 
-- `persist` ミドルウェアで localStorage（キー: `atos-battle-typing`）に保存。`partialize` で上記の設定7種と `bestTimes` のみ永続化する（`scene` は永続化しない）。
+- `persist` ミドルウェアで localStorage（キー: `atos-battle-typing`）に保存。`partialize` で上記の設定7種と `bestTimes`・`bestInfinityScore` のみ永続化する（`scene` は永続化しない）。
 
 ### useGameStore（バトル進行）
 
@@ -113,6 +115,7 @@ test-engine.ts           # タイピングエンジン単体テスト
 | `inputLocked` | 敵交代・終了時の入力ロック |
 | `wordKana` / `romajiTyped` / `romajiRemaining` | 出題単語と入力状況 |
 | `enemyTimerRatio` | 敵の攻撃タイマー残量（0〜1、100ms毎更新） |
+| `loopCount` | インフィニティでドラゴンを倒してループした回数 |
 | `typedCount` / `missCount` / `startedAt` / `endedAt` / `cleared` | スコア集計用 |
 
 ## 6. タイピングエンジン（`src/lib/typingEngine.ts`）
@@ -168,6 +171,7 @@ React 非依存の純粋なクラス `RomajiTypingEngine` として実装。
 - `[a-z]` のみ受理（修飾キー付きは無視）。入力ロック中・終了後は無視。
 - **正タイプ**: `heroAttacks` で敵にダメージ（難易度ごとの攻撃力 × 1文字）＋ `heroAttackSeq` 増加。敵HP 0 なら撃破フロー、単語完成なら次の単語を出題。
 - **ミスタイプ**: `enemyAttacks` で敵が反撃（主人公が敵の攻撃力分のダメージ）＋タイマーリセット。
+- **敵交代後の猶予時間**: 敵を倒して新しい単語が表示された直後の 1.5 秒間（`GRACE_PERIOD_MS`）は正当な入力のみ受け付け、ミスタイプはペナルティなしで無視する。
 
 ### 敵の攻撃タイマー
 
@@ -179,6 +183,14 @@ React 非依存の純粋なクラス `RomajiTypingEngine` として実装。
 - 敵HP 0 → 入力ロック → 0.5 秒後に `advanceEnemy`（次の敵 or `cleared=true`）→ タイマーリセット・ロック解除・次単語出題。
 - 全5体撃破 → ベストタイム記録 → 1.5 秒後にスコア表示へ。
 - 主人公HP 0 → `endBattle(false)` → 1.5 秒後にスコア表示へ。クリアとゲームオーバーが同時に発生した場合はゲームオーバーを優先する。
+
+### インフィニティモード
+
+むずかしい（`hard`）をクリア（ベストタイム記録あり）すると難易度選択画面に解放される。むずかしいと同じ構成（攻撃力 6・攻撃間隔倍率 ×1.0・出題ランクは hard / expert）だが、以下の点が異なる。
+
+- **クリアなし**: ドラゴン（5体目）撃破後もゲームは続き、`advanceEnemy` が先頭のスライムへ戻して `loopCount` を +1 する。終了は主人公HP 0（ゲームオーバー）のみ。
+- **ループごとの成長**: `enemyStats()` がループ回数 `loopCount` に応じて、敵の攻撃間隔・ダメージ・最大HPを `LOOP_SCALE`（1.3）の `loopCount` 乗倍にする。HPバーはスケール後の最大HPで表示する（`StatusBars.tsx` に「ラウンド N」も表示）。
+- **ベストスコア**: クリアが無いため、ゲームオーバー時にタイプした文字数（`typedCount`）を `recordInfinityScore` でベストスコアとして記録し、`Result.tsx` に表示する。
 
 ### 効果音
 
@@ -194,10 +206,10 @@ React 非依存の純粋なクラス `RomajiTypingEngine` として実装。
 
 ### 出題ランクの解決（`wordTierFor`）
 
-| 敵 | easy | normal | hard |
-|---|---|---|---|
-| スライム・ゴブリン・スケルトン | easy | normal | hard |
-| ゴーレム・ドラゴン（一段高い問題） | normal | hard | expert（7モーラ以上） |
+| 敵 | easy | normal | hard | infinity |
+|---|---|---|---|---|
+| スライム・ゴブリン・スケルトン | easy | normal | hard | hard |
+| ゴーレム・ドラゴン（一段高い問題） | normal | hard | expert（7モーラ以上） | expert（7モーラ以上） |
 
 単語は `createWordBag` が生成する「袋」から重複なく取り出し、空になれば自動補充する。
 
@@ -248,7 +260,8 @@ React StrictMode（開発時）では effect が二重実行されるため、�
 | ドラゴン | 160 | 4.0s | 12 | 城の上 | 一段高い問題 |
 
 - 主人公 HP: 100 固定。
-- 難易度パラメータ: 攻撃力（1正タイプあたりの敵へのダメージ） easy 15 / normal 8 / hard 6。攻撃間隔倍率 easy ×1.4 / normal ×1.15 / hard ×1.0。
+- 難易度パラメータ: 攻撃力（1正タイプあたりの敵へのダメージ） easy 15 / normal 8 / hard 6 / infinity 6。攻撃間隔倍率 easy ×1.4 / normal ×1.15 / hard ×1.0 / infinity ×1.0。
+- インフィニティはループごとに敵の攻撃間隔・ダメージ・最大HPが `LOOP_SCALE`（1.3）倍で成長する（`enemyStats()`）。インフィニティ以外は常に通常値。
 
 ### 単語（`src/data/words.ts`）
 
@@ -278,3 +291,4 @@ React StrictMode（開発時）では effect が二重実行されるため、�
 - **せいかくさ**: `typedCount / (typedCount + missCount) × 100`（小数1桁）
 - **クリアまでのじかん**: `endedAt - startedAt`（秒。ゲームオーバー時は「たたかったじかん」）
 - **ベストタイム**: クリア時のみ。難易度ごとに localStorage へ保存し、新記録時は「しんきろく！」を表示。
+- **ベストスコア**: インフィニティ時のみ。タイプした文字数（`typedCount`）を localStorage へ保存し、新記録時は「しんきろく！」を表示。
