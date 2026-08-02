@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+body {
+  font-family:
+    "Hiragino Maru Gothic ProN",
+    "Hiragino Sans",
+    "Yu Gothic UI",
+    "Yu Gothic",
+    Meiryo,
+    sans-serif;
+  background-color: #1e2433;
+  color: #ffffff;
+}

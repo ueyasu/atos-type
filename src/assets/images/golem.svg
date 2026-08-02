@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <!-- 腕 -->
+  <rect x="28" y="108" width="28" height="64" rx="11" fill="#8d8d99"/>
+  <rect x="184" y="108" width="28" height="64" rx="11" fill="#8d8d99"/>
+  <!-- 肩 -->
+  <circle cx="58" cy="104" r="23" fill="#7b7b88"/>
+  <circle cx="182" cy="104" r="23" fill="#7b7b88"/>
+  <!-- 体 -->
+  <rect x="58" y="92" width="124" height="106" rx="18" fill="#8d8d99"/>
+  <path d="M88 118 L108 140 L98 162" stroke="#6a6a75" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="142" cy="112" rx="13" ry="6" fill="#6cbf4f"/>
+  <!-- 頭 -->
+  <rect x="84" y="38" width="72" height="62" rx="14" fill="#7b7b88"/>
+  <rect x="101" y="62" width="15" height="11" rx="2.5" fill="#ffb347"/>
+  <rect x="125" y="62" width="15" height="11" rx="2.5" fill="#ffb347"/>
+  <rect x="105" y="83" width="30" height="6" rx="3" fill="#55555f"/>
+</svg>

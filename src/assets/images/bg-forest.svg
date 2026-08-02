@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a5dcf5"/>
+      <stop offset="1" stop-color="#e3f7ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#sky) #a5dcf5"/>
+  <circle cx="800" cy="82" r="46" fill="#fff3b0"/>
+  <!-- 遠くの丘 -->
+  <ellipse cx="210" cy="570" rx="430" ry="180" fill="#9ad68f"/>
+  <ellipse cx="770" cy="590" rx="490" ry="200" fill="#8bcb82"/>
+  <!-- 木々 -->
+  <g>
+    <rect x="108" y="320" width="24" height="100" rx="8" fill="#8b5a2b"/>
+    <circle cx="120" cy="292" r="56" fill="#3f9d4e"/>
+    <circle cx="82" cy="326" r="38" fill="#4cab5b"/>
+    <circle cx="158" cy="326" r="38" fill="#4cab5b"/>
+  </g>
+  <g>
+    <rect x="806" y="300" width="26" height="118" rx="8" fill="#8b5a2b"/>
+    <circle cx="820" cy="268" r="62" fill="#3f9d4e"/>
+    <circle cx="778" cy="306" r="42" fill="#4cab5b"/>
+    <circle cx="862" cy="306" r="42" fill="#4cab5b"/>
+  </g>
+  <g>
+    <rect x="452" y="352" width="20" height="80" rx="7" fill="#8b5a2b"/>
+    <circle cx="462" cy="330" r="44" fill="#48a857"/>
+  </g>
+  <!-- 地面 -->
+  <rect y="428" width="960" height="112" fill="#7ec850"/>
+  <rect y="428" width="960" height="14" fill="#5da944"/>
+  <circle cx="250" cy="446" r="20" fill="#5da944"/>
+  <circle cx="620" cy="450" r="24" fill="#5da944"/>
+  <circle cx="420" cy="444" r="16" fill="#6ab04c"/>
+</svg>

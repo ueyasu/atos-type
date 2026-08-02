@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <!-- 腕 -->
+  <rect x="66" y="146" width="15" height="44" rx="7" fill="#e9e6dc" transform="rotate(12 73 168)"/>
+  <rect x="159" y="146" width="15" height="44" rx="7" fill="#e9e6dc" transform="rotate(-12 166 168)"/>
+  <!-- あばら -->
+  <rect x="112" y="138" width="16" height="58" rx="6" fill="#e9e6dc"/>
+  <rect x="86" y="144" width="68" height="10" rx="5" fill="#f2f0e9"/>
+  <rect x="91" y="160" width="58" height="10" rx="5" fill="#f2f0e9"/>
+  <rect x="96" y="176" width="48" height="10" rx="5" fill="#f2f0e9"/>
+  <!-- 頭蓋骨 -->
+  <rect x="73" y="42" width="94" height="82" rx="38" fill="#f2f0e9"/>
+  <circle cx="102" cy="86" r="13" fill="#2b2b33"/>
+  <circle cx="138" cy="86" r="13" fill="#2b2b33"/>
+  <polygon points="120,98 113,114 127,114" fill="#2b2b33"/>
+  <!-- あごと歯 -->
+  <rect x="90" y="118" width="60" height="17" rx="7" fill="#f2f0e9"/>
+  <rect x="104" y="121" width="3.5" height="11" fill="#cfcabc"/>
+  <rect x="118" y="121" width="3.5" height="11" fill="#cfcabc"/>
+  <rect x="132" y="121" width="3.5" height="11" fill="#cfcabc"/>
+</svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <!-- 翼 -->
+  <path d="M78 148 L34 58 Q84 74 110 122 Z" fill="#b03a2c"/>
+  <!-- しっぽ -->
+  <path d="M64 182 Q16 196 22 148 Q30 178 60 160 Z" fill="#d9503f"/>
+  <!-- 体 -->
+  <ellipse cx="112" cy="152" rx="62" ry="46" fill="#d9503f"/>
+  <ellipse cx="114" cy="164" rx="38" ry="30" fill="#f2c14e"/>
+  <!-- 脚 -->
+  <rect x="82" y="188" width="20" height="24" rx="8" fill="#b03a2c"/>
+  <rect x="126" y="188" width="20" height="24" rx="8" fill="#b03a2c"/>
+  <!-- 角 -->
+  <polygon points="138,50 126,12 154,40" fill="#f2e6c9"/>
+  <polygon points="164,46 166,8 182,42" fill="#f2e6c9"/>
+  <!-- 頭 -->
+  <circle cx="160" cy="80" r="39" fill="#d9503f"/>
+  <ellipse cx="194" cy="92" rx="23" ry="14" fill="#d9503f"/>
+  <circle cx="200" cy="86" r="3" fill="#7c2418"/>
+  <circle cx="168" cy="72" r="10" fill="#ffffff"/>
+  <circle cx="171" cy="73" r="4.5" fill="#22314a"/>
+  <!-- 口 -->
+  <path d="M182 100 Q196 106 210 99" stroke="#7c2418" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+</svg>

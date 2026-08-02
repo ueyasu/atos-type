@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <!-- 耳 -->
+  <polygon points="64,102 18,66 58,132" fill="#5da944"/>
+  <polygon points="176,102 222,66 182,132" fill="#5da944"/>
+  <!-- 体 -->
+  <rect x="84" y="150" width="72" height="52" rx="18" fill="#8a6a3f"/>
+  <!-- 頭 -->
+  <rect x="68" y="66" width="104" height="90" rx="36" fill="#6cbf4f"/>
+  <!-- 眉（怒り眉） -->
+  <rect x="86" y="84" width="28" height="8" rx="4" fill="#2e5a1e" transform="rotate(16 100 88)"/>
+  <rect x="126" y="84" width="28" height="8" rx="4" fill="#2e5a1e" transform="rotate(-16 140 88)"/>
+  <!-- 目 -->
+  <circle cx="100" cy="106" r="12" fill="#ffffff"/>
+  <circle cx="140" cy="106" r="12" fill="#ffffff"/>
+  <circle cx="102" cy="108" r="5.5" fill="#22314a"/>
+  <circle cx="138" cy="108" r="5.5" fill="#22314a"/>
+  <!-- 鼻 -->
+  <circle cx="120" cy="124" r="6" fill="#4e9239"/>
+  <!-- 口とキバ -->
+  <rect x="94" y="138" width="52" height="15" rx="7" fill="#3a2a22"/>
+  <polygon points="102,139 107,151 112,139" fill="#ffffff"/>
+  <polygon points="128,139 133,151 138,139" fill="#ffffff"/>
+</svg>

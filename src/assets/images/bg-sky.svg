@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f3674"/>
+      <stop offset="0.55" stop-color="#9c5a86"/>
+      <stop offset="1" stop-color="#f2a35e"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#dusk) #3f3674"/>
+  <!-- 月と星 -->
+  <circle cx="150" cy="90" r="38" fill="#fdf3d0"/>
+  <circle cx="138" cy="80" r="7" fill="#e8ddb0"/>
+  <circle cx="160" cy="102" r="5" fill="#e8ddb0"/>
+  <g fill="#ffffff">
+    <circle cx="320" cy="60" r="3.5" opacity="0.9"/><circle cx="470" cy="110" r="2.5" opacity="0.7"/>
+    <circle cx="620" cy="52" r="3" opacity="0.9"/><circle cx="760" cy="130" r="2.5" opacity="0.7"/>
+    <circle cx="860" cy="70" r="3.5" opacity="0.9"/><circle cx="230" cy="170" r="2.5" opacity="0.6"/>
+  </g>
+  <!-- 雲 -->
+  <g fill="#ffffff" opacity="0.22">
+    <ellipse cx="380" cy="200" rx="90" ry="24"/><ellipse cx="440" cy="185" rx="60" ry="20"/>
+    <ellipse cx="700" cy="260" rx="100" ry="26"/><ellipse cx="770" cy="242" rx="62" ry="20"/>
+  </g>
+  <!-- 遠景の山々 -->
+  <polygon points="0,430 180,290 360,430" fill="#5c4a7c" opacity="0.7"/>
+  <polygon points="600,430 800,270 960,430" fill="#5c4a7c" opacity="0.7"/>
+  <!-- 城の屋上（城の上） -->
+  <rect y="428" width="960" height="112" fill="#5c5468"/>
+  <g fill="#5c5468">
+    <rect x="30" y="394" width="46" height="40"/><rect x="136" y="394" width="46" height="40"/>
+    <rect x="242" y="394" width="46" height="40"/><rect x="348" y="394" width="46" height="40"/>
+    <rect x="454" y="394" width="46" height="40"/><rect x="560" y="394" width="46" height="40"/>
+    <rect x="666" y="394" width="46" height="40"/><rect x="772" y="394" width="46" height="40"/>
+    <rect x="878" y="394" width="46" height="40"/>
+  </g>
+  <rect y="428" width="960" height="10" fill="#4a4353"/>
+  <!-- 塔と旗 -->
+  <rect x="796" y="270" width="90" height="160" fill="#6b6377"/>
+  <polygon points="786,270 841,196 896,270" fill="#c94f4f"/>
+  <rect x="838" y="150" width="5" height="52" fill="#4a4353"/>
+  <polygon points="843,152 892,164 843,178" fill="#f2c14e"/>
+</svg>
